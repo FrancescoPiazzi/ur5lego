@@ -16,8 +16,23 @@ In order to retrieve data we used a ZED Depth-camera placed on the side of the w
 In order to classify the blocks we opted for a machine-learning-based solution, specifically YOLO, a pre trained fast R-CNN model which is then fine-tuned on a synthetic dataset
 # Controller
 A master node is responsible of managing all the events, synchronizing the vision part and the motion of the robot. The node is implemented as a service client of the vision node and as an action client of the motion node, so that it can request a new block position only when needed and plan all the movements, sending each step one by one.
-The following graph represent how the system works and how the main node, communication happens through customized messages, services and actions.
-The master node communicate first with the vision node, requesting the position, orientation and the type of a block.
+The following graph represent how the nodes of the system works and how the main node interact with the others.
+Communication happens through customized messages, services and actions.
+![Ur5lego nodes](https://github.com/S-SquadraSpecialeSirenetteSpastiche/ur5lego/blob/master/images/node_workflow.png?raw=true)
+
+1. `move_controller`, the main node, request a new block position, orientation and type through the `get_position` service offered by `vision_service`.
+2. `vision_service` detect the bounding box of the nearest block to the camera and returns the data required.
+3. After recovering data of a new block the motion planning begins:
+	1. Reach the point above the object, by sending the coordinates to `move_server` and wait for result
+	2. Lower the robot to the object
+	3. Grab the block, by sending the coordinates to `gripper_server` and wait for result
+	4. Raise the bock and return to the same position as point 1
+	5. Take the block above the designated spot, according to the block type.
+	6. Lower the block and release it
+	7. Update the height of the stack of the specific block type
+4. Once the whole action is completed `move_controller` can star again, requesting a new block data to `vision_service`.
+![Workflow](https://github.com/S-SquadraSpecialeSirenetteSpastiche/ur5lego/blob/master/images/workflow.png?raw=true)
+
 # Motion
 ## Overview
 Once a motion is requested, the robot must complete it, as fast as requested and especially avoiding singularities. The node that handles the motion of the robot is implemented using a ROS action server, this was mainly so the client requesting the action could easily wait for it to complete before sending another.
