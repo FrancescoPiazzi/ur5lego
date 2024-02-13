@@ -7,17 +7,9 @@ The objective is split into 4 assignments.
 3. There are several objects with no orientation constraints, however the blocks can’t lean on each other, the task is the same
 4.  Given a specific construction with well known design and the necessary blocks, the robot is to complete the construction
 
+The source code for the project is at https://github.com/FrancescoPiazzi/ur5lego
 # Overview
-TODO
-We used ROS to send stuff between the nodes, kind of looks like this
 
-```mermaid
-graph TD
-A[Vision]
-B[Controller]
-C[Movement]
-A --> B --> C
-```
 
 # Perception
 TODO
@@ -80,55 +72,6 @@ Because of this, we need to implement some way to send the robot a lot of interm
 ### Trajectory planning over the joint space
 The most simple and first type of trajectory we implemented was a polynomial interpolation from the starting position to the final one, over the joint space. 
 This was very fast as it required to call the inverse kinematics algorithm only once, and then compute the coefficients of a third order polynomial parameterized over time, so that with $time=0$ the joints would be at the starting position, and with $time=t_f$ the joints would be at the final one ($t_f$ is the time to complete the motion). 
-We approach the problem by assuming that the arm will be not be moving at the end of the motion (we have not implemented inverse dynamics in this project so we wouldn't have a way to compute starting and end velocities anyway), the position and velocity of the i-th joint will be
-$$ \begin{gather*}
-q_i(t) = a_0 +a_1 t + a_2 t^2 + a_3 t^3 \\
-\dot q_i(t) = a_1 + 2a_2 t + 3a_3 t^2 
-\end{gather*}$$
-Now we can build a system
-$$
-\left\{ 
-    \begin{array}{l}
-        q_i(0) = q_{start}&\\
-        \dot q_i(0) = 0 &\\
-        q_i(t_f) = q_{end} &\\
-        \dot q_i(t_f) = 0
-    \end{array} 
-\right.
-\Rightarrow
-\left\{ 
-    \begin{array}{l}
-		a_o = q_{start} &\\
-		a_1 = 0 &\\
-		a_0 +a_1 t_f + a_2 t_f^2 + a_3 t_f^3 = q_{end} &\\
-		a_1 + 2a_2 t_f + 3a_3 t_f^2 = 0
-    \end{array} 
-\right.
-$$
-This is a linear system, and because we have 4 variables (the $a_{i}$) and 4 equations, we will have exactly one solution, we can represent the system like so:
-$$
-\begin{bmatrix}
-a_0 \\
-a_1 \\
-a_2 \\
-a_3
-\end{bmatrix}
-\begin{bmatrix}
-1 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 \\
-1 & t_f & t_f^2 & t_f^3 \\
-0 & 1 & 2t_f & 3t_f^2
-\end{bmatrix}
-=
-\begin{bmatrix}
-q_0 \\
-0 \\
-q_f \\
-0
-\end{bmatrix}
-$$
-We can now easily compute the coefficients by multiplying both sides by the inverse of the 4x4 matrix, its computation should be very fast as it is full of zeroes.
-Once we have the coefficients, we can put them back into the original equation and compute the evolution of the joints increasing the time by small intervals, and sending the positions to the robot.
 
 The algorithm to compute and send a trajectory over a joint space looks like this
 ````
