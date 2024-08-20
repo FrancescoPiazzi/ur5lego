@@ -18,7 +18,6 @@ Then you can start the robot controller with:
 ```bash
 roslaunch ur5lego ur5lego.launch
 ```
-NOTE: ur5lego.launch will be the final launch file, for now start inverse_kinematics.launch
 
 
 ## Moving the robot
@@ -47,16 +46,16 @@ Grasping in the simulation is functional but may have some bugs due to limitatio
 ./scripts/move_wrapper.bash -0.08
 ```
 If you want to control it from code you wrote yourself you can call the `gripper_server` action server with the same arguments as above.
-NOTE: the gripper_server is not yet implemented, however you can send a float over `/gripper_joint_position`
 
 
 ## Manual grasping
-If the grasping causes too many issues, you can still grasp the blocks by using a more mechanical approach by running:
+If the grasping causes too many issues, you can still grasp the blocks by using a more hard-coded approach by running:
 ```bash
 ./scripts/connect_links.bash <block_name> <connect>
 ```
 where `<block_name>` is the name of the block you want to grasp and `<connect>` is either `true` or `false` depending on whether you want to grasp or ungrasp the block.
 <br>
+This will create or destroy a link between the gripper and the block, meaning that it should be used only when the gripper is already in its grasping position to avoid silly results.  
 With this approach there is no need to open and close the gripper and it is not reccomended to do so as the block will probably start glitching as it was doing with the automatic grasping method
 
 
